@@ -1341,6 +1341,26 @@ struct LiveParametersData {
   posenetValid @9 :Bool;
 }
 
+
+struct LiveNaviData {
+  id @0 :UInt8;
+  ts @1 :UInt64;  
+  speedLimit @2 :Float32;
+  speedLimitDistance @3 :Float32;
+  safetySign @4 :Float32;
+  roadCurvature @5 :Float32;
+  mapValid @6 :Bool;
+  mapEnable @7 :Int32;
+  trafficType @8 :Int32;
+
+  turnInfo @9 :Int32;
+  distanceToTurn @10 :Int32;      
+
+   arrivalSec @11 :Float32;
+   arrivalDistance @12 :Float32;
+}
+
+
 struct LiveMapData {
   speedLimit @0 :Float32;
   speedLimitDistance @1 :Float32;
@@ -1455,6 +1475,7 @@ struct Event {
 
     # Map Info
     liveMapData @62 :LiveMapData;
+    liveNaviData @80 :LiveNaviData;
 
     # *********** debug ***********
     testJoystick @52 :Joystick;
