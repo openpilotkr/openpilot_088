@@ -271,21 +271,21 @@ int main() {
       }
       else
       {
-        res.speedLimit = 0
-        res.speedLimitDistance = 0
-        res.safetySign = 0
+        event.speedLimit = 0
+        event.speedLimitDistance = 0
+        event.safetySign = 0
       }
 
 
 
-      framed.setSpeedLimit( res.speedLimit );  // Float32;
-      framed.setSpeedLimitDistance( res.speedLimitDistance );  // raw_target_speed_map_dist Float32;
-      framed.setSafetySign( res.safetySign ); // map_sign Float32;
-      framed.setTurnInfo( res.turnInfo );  // Float32;
-      framed.setDistanceToTurn( res.distanceToTurn );  // Float32;
-      framed.setTs( res.tv_sec );
-      framed.setMapEnable( res.mapEnable );
-      framed.setMapValid( res.mapValid );
+      framed.setSpeedLimit( event.speedLimit );  // Float32;
+      framed.setSpeedLimitDistance( event.speedLimitDistance );  // raw_target_speed_map_dist Float32;
+      framed.setSafetySign( event.safetySign ); // map_sign Float32;
+      framed.setTurnInfo( event.turnInfo );  // Float32;
+      framed.setDistanceToTurn( event.distanceToTurn );  // Float32;
+      framed.setTs( event.tv_sec );
+      framed.setMapEnable( event.mapEnable );
+      framed.setMapValid( event.mapValid );
 
      pm.send("liveMapData", msg);
     }
