@@ -20,3 +20,6 @@ if [ -f "/data/openpilot/prebuilt" ]; then
   rm -f /data/openpilot/prebuilt
 fi
 reboot
+
+
+modify
