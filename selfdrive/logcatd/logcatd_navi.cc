@@ -271,9 +271,9 @@ int main() {
       }
       else
       {
-        event.speedLimit = 0
-        event.speedLimitDistance = 0
-        event.safetySign = 0
+        event.speedLimit = 0;
+        event.speedLimitDistance = 0;
+        event.safetySign = 0;
       }
 
 
