@@ -21,5 +21,3 @@ if [ -f "/data/openpilot/prebuilt" ]; then
 fi
 reboot
 
-
-modify
