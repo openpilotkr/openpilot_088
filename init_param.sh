@@ -6,7 +6,6 @@ export PATH=/usr/local/bin:/data/data/com.termux/files/usr/bin:/data/data/com.te
 export PYTHONPATH=/data/openpilot
 
 cd /data/openpilot
-
 /data/data/com.termux/files/usr/bin/cat /data/openpilot/param_init_value | while read line
 do
 ParamName=$(/data/data/com.termux/files/usr/bin/echo $line | /data/data/com.termux/files/usr/bin/applets/awk -F ':' '{print $1}')
