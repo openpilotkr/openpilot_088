@@ -223,9 +223,9 @@ class CarInterface(CarInterfaceBase):
     ret.brakeMaxV = [0.7, 3.0]   # max brake allowed
 
     ret.longitudinalTuning.kpBP = [0., 4., 9., 17., 23., 31.]
-    ret.longitudinalTuning.kpV = [1.2, 0.9, 0.7, 0.6, 0.5, 0.4]
+    ret.longitudinalTuning.kpV = [1.0, 0.85, 0.7, 0.6, 0.5, 0.4]
     ret.longitudinalTuning.kiBP = [0., 4., 9., 17., 23., 31.]
-    ret.longitudinalTuning.kiV = [0.33, 0.22, 0.21, 0.17, 0.15, 0.13]
+    ret.longitudinalTuning.kiV = [0.28, 0.22, 0.2, 0.17, 0.15, 0.13]
 
     ret.longitudinalTuning.deadzoneBP = [0., 4., 31.]
     ret.longitudinalTuning.deadzoneV = [0., 0.1, 0.1]
@@ -236,7 +236,7 @@ class CarInterface(CarInterfaceBase):
 
     ret.enableBsm = 0x58b in fingerprint[0]
 
-    ret.startAccel = 0.1
+    ret.startAccel = 0.0
 
     ret.standStill = False
     ret.vCruisekph = 0
@@ -277,6 +277,8 @@ class CarInterface(CarInterfaceBase):
 
     ret = self.CS.update(self.cp, self.cp2, self.cp_cam)
     ret.canValid = self.cp.can_valid and self.cp2.can_valid and self.cp_cam.can_valid
+    if not self.cp.can_valid or not self.cp2.can_valid or not self.cp_cam.can_valid:
+      print('cp={}  cp2={}  cp_cam={}'.format(bool(self.cp.can_valid), bool(self.cp2.can_valid), bool(self.cp_cam.can_valid)))
     ret.steeringRateLimited = self.CC.steer_rate_limited if self.CC is not None else False
 
     if self.CP.pcmCruise and not self.CC.scc_live:
@@ -336,6 +338,10 @@ class CarInterface(CarInterfaceBase):
     #  events.add(EventName.driverSteering)
     if self.CC.need_brake and not self.CC.longcontrol:
       events.add(EventName.needBrake)
+    if self.CC.cruise_gap_adjusting:
+      events.add(EventName.gapAdjusting)
+    if (self.CS.on_speed_control and not self.CC.self.map_enabled) or (self.CC.on_speed_control and self.CC.self.map_enabled):
+      events.add(EventName.camSpeedDown)
     if self.CS.cruiseState_standstill or self.CC.standstill_status == 1:
       #events.add(EventName.standStill)
       self.CP.standStill = True

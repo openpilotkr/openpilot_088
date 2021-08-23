@@ -194,6 +194,7 @@ std::unordered_map<std::string, uint32_t> keys = {
     {"PandaFirmware", CLEAR_ON_MANAGER_START | CLEAR_ON_PANDA_DISCONNECT},
     {"PandaFirmwareHex", CLEAR_ON_MANAGER_START | CLEAR_ON_PANDA_DISCONNECT},
     {"PandaDongleId", CLEAR_ON_MANAGER_START | CLEAR_ON_PANDA_DISCONNECT},
+    {"PandaHeartbeatLost", CLEAR_ON_MANAGER_START | CLEAR_ON_IGNITION_OFF},
     {"Passive", PERSISTENT},
     {"PrimeRedirected", PERSISTENT},
     {"RecordFront", PERSISTENT},
@@ -344,6 +345,7 @@ std::unordered_map<std::string, uint32_t> keys = {
     {"FCAType", PERSISTENT},
     {"GitPullOnBoot", PERSISTENT},
     {"LiveSteerRatioPercent", PERSISTENT},
+    {"StoppingDistAdj", PERSISTENT},
 };
 
 } // namespace

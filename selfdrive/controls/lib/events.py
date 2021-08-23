@@ -696,6 +696,22 @@ EVENTS: Dict[int, Dict[str, Union[Alert, Callable[[Any, messaging.SubMaster, boo
       Priority.LOW, VisualAlert.none, AudibleAlert.none, .0, .1, .1, alert_rate=0.75),
   },
 
+  EventName.camSpeedDown: {
+    ET.WARNING: Alert(
+      "안전구간 감속 제어 중",
+      "",
+      AlertStatus.normal, AlertSize.small,
+      Priority.LOW, VisualAlert.none, AudibleAlert.none, 1.5, 1.5, 1.5, alert_rate=0.75),
+  },
+
+  EventName.gapAdjusting: {
+    ET.WARNING: Alert(
+      "크루즈 갭 조정 중",
+      "",
+      AlertStatus.normal, AlertSize.small,
+      Priority.LOW, VisualAlert.none, AudibleAlert.none, .0, .1, .1, alert_rate=0.75),
+  },
+
   EventName.outOfSpace: {
     ET.PERMANENT: Alert(
       "저장공간 부족",
@@ -840,6 +856,13 @@ EVENTS: Dict[int, Dict[str, Union[Alert, Callable[[Any, messaging.SubMaster, boo
     ET.PERMANENT: NormalPermanentAlert("메모리 부족", "장치를 재시작하세요"),
     ET.NO_ENTRY: NoEntryAlert("메모리 부족: 장치를 재시작하세요",
                                audible_alert=AudibleAlert.chimeDisengage),
+  },
+
+  EventName.highCpuUsage: {
+    #ET.SOFT_DISABLE: SoftDisableAlert("System Malfunction: Reboot Your Device"),
+    #ET.PERMANENT: NormalPermanentAlert("System Malfunction", "Reboot your Device"),
+    ET.NO_ENTRY: NoEntryAlert("시스템오작동: 장치를 재시작 하세요",
+                              audible_alert=AudibleAlert.chimeDisengage),
   },
 
   EventName.accFaulted: {

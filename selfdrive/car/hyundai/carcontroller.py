@@ -98,7 +98,6 @@ class CarController():
     self.accel_lim_prev = 0.
     self.accel_lim = 0.
     self.lastresumeframe = 0
-    self.scc11cnt = self.scc12cnt = 0
     self.counter_init = False
 
     self.resume_cnt = 0
@@ -137,6 +136,8 @@ class CarController():
     self.mad_mode_enabled = self.params.get_bool("MadModeEnabled")
     self.ldws_fix = self.params.get_bool("LdwsCarFix")
     self.radar_helper_enabled = self.params.get_bool("RadarLongHelper")
+    self.stopping_dist_adj_enabled = self.params.get_bool("StoppingDistAdj")
+    self.stock_weight = 0
 
     self.steer_mode = ""
     self.mdps_status = ""
@@ -172,6 +173,7 @@ class CarController():
     self.cruise_gap_prev = 0
     self.cruise_gap_set_init = 0
     self.cruise_gap_switch_timer = 0
+    self.cruise_gap_adjusting = False
     self.standstill_fault_reduce_timer = 0
     self.cruise_gap_prev2 = 0
     self.cruise_gap_switch_timer2 = 0
@@ -198,6 +200,8 @@ class CarController():
     self.variable_steer_delta = self.params.get_bool("OpkrVariableSteerDelta")
 
     self.cc_timer = 0
+    self.on_speed_control = False
+    self.map_enabled = self.params.get_bool("OpkrMapEnable")
 
     if CP.lateralTuning.which() == 'pid':
       self.str_log2 = 'T={:0.2f}/{:0.3f}/{:0.2f}/{:0.5f}'.format(CP.lateralTuning.pid.kpV[1], CP.lateralTuning.pid.kiV[1], CP.lateralTuning.pid.kdV[0], CP.lateralTuning.pid.kf)
@@ -243,6 +247,7 @@ class CarController():
     self.yRel2 = int(plan.yRel2) #EON Lead
     self.vRel2 = int(plan.vRel2 * 3.6 + 0.5) #EON Lead
     self.lead2_status = plan.status2
+    self.on_speed_control = plan.onSpeedControl
 
     lateral_plan = sm['lateralPlan']
     self.outScale = lateral_plan.outputScale
@@ -440,8 +445,10 @@ class CarController():
             can_sends.append(create_clu11(self.packer, frame, CS.clu11, Buttons.GAP_DIST)) if not self.longcontrol \
              else can_sends.append(create_clu11(self.packer, frame, CS.clu11, Buttons.GAP_DIST, clu11_speed, CS.CP.sccBus))
             self.cruise_gap_switch_timer = 0
+            self.cruise_gap_adjusting = True
         elif self.opkr_autoresume:
           self.standstill_fault_reduce_timer += 1
+          self.cruise_gap_adjusting = False
     # reset lead distnce after the car starts moving
     elif self.last_lead_distance != 0:
       self.last_lead_distance = 0
@@ -461,10 +468,16 @@ class CarController():
             can_sends.append(create_clu11(self.packer, frame, CS.clu11, Buttons.GAP_DIST)) if not self.longcontrol \
              else can_sends.append(create_clu11(self.packer, frame, CS.clu11, Buttons.GAP_DIST, clu11_speed, CS.CP.sccBus))
             self.cruise_gap_switch_timer = 0
+            self.cruise_gap_adjusting = True
         elif self.cruise_gap_prev == CS.cruiseGapSet and self.opkr_autoresume:
           self.cruise_gap_set_init = 0
           self.cruise_gap_prev = 0
-    
+          self.cruise_gap_adjusting = False
+        else:
+          self.cruise_gap_adjusting = False
+    else:
+      self.cruise_gap_adjusting = False
+
     if CS.cruise_buttons == 4:
       self.cancel_counter += 1
     elif CS.acc_active:
@@ -538,19 +551,25 @@ class CarController():
         if 0 < CS.out.radarDistance <= 149 and self.radar_helper_enabled:
           # neokii's logic, opkr mod
           if aReqValue > 0.:
-            stock_weight = interp(CS.out.radarDistance, [3., 25.], [0.8, 0.])
+            self.stock_weight = interp(CS.out.radarDistance, [3., 25.], [0.8, 0.])
+          elif 3.5 < CS.out.radarDistance and aReqValue < 0. and CS.out.vEgo * CV.MS_TO_KPH <= 2. and not CS.out.cruiseState.standstill and self.stopping_dist_adj_enabled:
+            self.stock_weight *= 0.9
+          elif 0 < CS.out.radarDistance <= 3.5 and self.stopping_dist_adj_enabled:
+            self.stock_weight = interp(CS.out.radarDistance, [2.5, 3.5], [1., 0.])
+            apply_accel = apply_accel * (1. - self.stock_weight) + aReqValue * self.stock_weight
           elif aReqValue < 0.:
-            stock_weight = interp(CS.out.radarDistance, [3., 25.], [1., 0.])
-            if lead_objspd < 0:
-              vRel_weight = interp(abs(lead_objspd), [0, 25], [1, 2])
-              stock_weight = interp(CS.out.radarDistance, [3. ** vRel_weight, 25. * vRel_weight], [1., 0.])
+            self.stock_weight = interp(CS.out.radarDistance, [3., 25.], [1., 0.])
+            # if lead_objspd < 0:
+            #   vRel_weight = interp(abs(lead_objspd), [0, 25], [1, 2])
+            #   self.stock_weight = interp(CS.out.radarDistance, [3. ** vRel_weight, 25. * vRel_weight], [1., 0.])
           else:
-            stock_weight = 0.
-          apply_accel = apply_accel * (1. - stock_weight) + aReqValue * stock_weight
-        elif 0 < CS.out.radarDistance <= 3: # use radar by force to stop anyway at 3m
-          apply_accel = aReqValue
+            self.stock_weight = 0.
+          apply_accel = apply_accel * (1. - self.stock_weight) + aReqValue * self.stock_weight
+        elif 0 < CS.out.radarDistance <= 4: # use radar by force to stop anyway below 4m
+          self.stock_weight = interp(CS.out.radarDistance, [3., 4.], [1., 0.])
+          apply_accel = apply_accel * (1. - self.stock_weight) + aReqValue * self.stock_weight
         else:
-          stock_weight = 0.
+          self.stock_weight = 0.
         can_sends.append(create_scc11(self.packer, frame, set_speed, lead_visible, self.scc_live, lead_dist, lead_vrel, lead_yrel, 
          self.car_fingerprint, CS.out.vEgo * CV.MS_TO_KPH, self.acc_standstill, CS.scc11))
         if (CS.brake_check or CS.cancel_check) and self.car_fingerprint not in [CAR.NIRO_EV]:
@@ -578,6 +597,7 @@ class CarController():
     if self.cc_timer > 100:
       self.cc_timer = 0
       self.radar_helper_enabled = self.params.get_bool("RadarLongHelper")
+      self.map_enabled = self.params.get_bool("OpkrMapEnable")
       if self.params.get_bool("OpkrLiveTunePanelEnable"):
         if CS.CP.lateralTuning.which() == 'pid':
           self.str_log2 = 'T={:0.2f}/{:0.3f}/{:0.2f}/{:0.5f}'.format(float(Decimal(self.params.get("PidKp", encoding="utf8"))*Decimal('0.01')), \

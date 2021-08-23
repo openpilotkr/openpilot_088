@@ -27,6 +27,7 @@
 #include "selfdrive/ui/ui.h"
 #include "selfdrive/ui/qt/util.h"
 #include "selfdrive/ui/qt/qt_window.h"
+#include "selfdrive/ui/qt/widgets/opkr.h"
 
 TogglesPanel::TogglesPanel(QWidget *parent) : QWidget(parent) {
   QVBoxLayout *main_layout = new QVBoxLayout(this);
@@ -256,12 +257,16 @@ SoftwarePanel::SoftwarePanel(QWidget* parent) : QWidget(parent) {
     }
     std::system("/data/openpilot/gitcommit.sh");
     std::system("date '+%F %T' > /data/params/d/LastUpdateTime");
+    QString last_ping = QString::fromStdString(params.get("LastAthenaPingTime"));
     QString desc = "";
     QString commit_local = QString::fromStdString(Params().get("GitCommit").substr(0, 10));
     QString commit_remote = QString::fromStdString(Params().get("GitCommitRemote").substr(0, 10));
     QString empty = "";
     desc += QString("로    컬: %1\n리모트: %2%3%4\n").arg(commit_local, commit_remote, empty, empty);
-    if (commit_local == commit_remote) {
+    
+    if (!last_ping.length()) {
+      desc += QString("인터넷에 연결되어 있지 않습니다. 업데이트확인을 위해 WiFi를 연결하세요.");
+    } else if (commit_local == commit_remote) {
       desc += QString("로컬과 리모트가 일치합니다. 업데이트가 필요 없습니다.");
     } else {
       desc += QString("업데이트가 있습니다. 적용하려면 확인버튼을 누르세요.");
@@ -635,6 +640,7 @@ TuningPanel::TuningPanel(QWidget* parent) : QWidget(parent) {
   layout->addWidget(new DynamicTR());
   layout->addWidget(new CruiseGapTR());
   layout->addWidget(new RadarLongHelperToggle());
+  layout->addWidget(new StoppingDistAdjToggle());
 }
 
 void SettingsWindow::showEvent(QShowEvent *event) {
