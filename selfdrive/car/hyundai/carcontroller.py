@@ -549,18 +549,16 @@ class CarController():
         aReqValue = CS.scc12["aReqValue"]
         if 0 < CS.out.radarDistance <= 149 and self.radar_helper_enabled:
           # neokii's logic, opkr mod
+          stock_weight = 0.
           if aReqValue > 0.:
             stock_weight = interp(CS.out.radarDistance, [3., 25.], [0.8, 0.])
-          elif 3.5 < CS.out.radarDistance and aReqValue < 0. and CS.out.vEgo * CV.MS_TO_KPH <= 1.5 and not CS.out.cruiseState.standstill and self.stopping_dist_adj_enabled:
-            stock_weight = 0
-          elif 0 < CS.out.radarDistance <= 3.5 and self.stopping_dist_adj_enabled:
-            stock_weight = interp(CS.out.radarDistance, [2.5, 3.5], [1., 0.])
-            apply_accel = apply_accel * (1. - stock_weight) + aReqValue * stock_weight
-          elif aReqValue < 0.:
-            stock_weight = interp(CS.out.radarDistance, [3., 25.], [1., 0.])
+          elif aReqValue < 0. and self.stopping_dist_adj_enabled:
+            stock_weight = interp(CS.out.radarDistance, [2.5, 4.5, 25.], [1., 0.5, 0.])
             # if lead_objspd < 0:
             #   vRel_weight = interp(abs(lead_objspd), [0, 25], [1, 2])
             #   stock_weight = interp(CS.out.radarDistance, [3. ** vRel_weight, 25. * vRel_weight], [1., 0.])
+          elif aReqValue < 0.:
+            stock_weight = interp(CS.out.radarDistance, [3., 25.], [1., 0.])
           else:
             stock_weight = 0.
           apply_accel = apply_accel * (1. - stock_weight) + aReqValue * stock_weight
